@@ -1,0 +1,153 @@
+//
+//  DataModelEntities.m
+//
+//  Created by Admin on 11/04/11.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import "DataModelEntities.h"
+#import "SharedObjects.h"
+#import "DictionaryUtils.h"
+
+@implementation TwitterAssets
+@synthesize tweet;
+@synthesize profileImage;
+@synthesize timeStamp;
+@synthesize tweetId;
+@synthesize username;
+
+- (id)init {
+	self = [super init];
+	
+	if (self) {
+		
+        if(nil == tweet)
+        {
+            tweet = [[NSString alloc] init];
+            profileImage = [[NSString alloc] init];
+            timeStamp = [[NSString alloc] init];
+            tweetId = [[NSString alloc] init];
+            username = [[NSString alloc] init];
+        }
+	}
+	return self;
+}
+
+
+-(void) dealloc
+{	
+    if(nil != tweet)
+    {
+        [tweet release];
+        tweet = nil;
+    }
+    if(nil != profileImage)
+    {
+        [profileImage release];
+        profileImage = nil;
+    }
+    if(nil != timeStamp)
+    {
+        [timeStamp release];
+        timeStamp = nil;
+    }
+    if(nil != tweetId)
+    {
+        [tweetId release];
+        tweetId = nil;
+    }
+    if(nil != username)
+    {
+        [username release];
+        username = nil;
+    }
+	[super dealloc];
+}
+
+@end
+
+
+@implementation ServiceResponse
+@synthesize twitterResponse;
+@synthesize twitterArray;
+
+- (id)init {
+	self = [super init];
+	
+	if (self) {
+		if(nil == twitterResponse)
+        {
+            twitterResponse = [[NSMutableArray alloc] init];
+        }
+        if(nil == twitterArray)
+        {
+            twitterArray = [[NSMutableArray alloc] init];
+        }
+	}
+	return self;
+}
+
+-(void) setTwitterProperties:(NSMutableArray*) array
+{
+    DictionaryUtils *dictUtils = [DictionaryUtils sharedInstance];
+    
+    if(nil != array)
+    {
+        for(int i = 0; i<[array count];i++)
+        {
+            TwitterAssets *twitterAssets = [[TwitterAssets alloc] init];
+            
+            twitterAssets.tweet = [[array objectAtIndex:i] objectForKey:@"text"];
+            
+            twitterAssets.profileImage = [NSString stringWithFormat:@"%@",[[[array objectAtIndex:i] objectForKey:@"user"]
+                                                                           objectForKey:@"profile_image_url"]];
+            
+            twitterAssets.timeStamp = [[array objectAtIndex:i] objectForKey:@"created_at"];
+
+            twitterAssets.tweetId = [[array objectAtIndex:i] objectForKey:@"id_str"];
+            
+            twitterAssets.username = [[[array objectAtIndex:i] objectForKey:@"user"] objectForKey:@"screen_name"];
+            
+            [self.twitterArray addObject:twitterAssets];
+
+            if ([dictUtils dict:[array objectAtIndex:i] hasKey:@"retweeted_status"]) {
+              
+                twitterAssets.tweet = [[[array objectAtIndex:i] objectForKey:@"retweeted_status"] objectForKey:@"text"];
+                
+                twitterAssets.profileImage = [NSString stringWithFormat:@"%@", [[[[array objectAtIndex:i] objectForKey:@"retweeted_status"] 
+                                                                                objectForKey:@"user"] objectForKey:@"profile_image_url"]];
+                
+                twitterAssets.timeStamp = [[[array objectAtIndex:i] objectForKey:@"retweeted_status"] objectForKey:@"created_at"];
+                
+                twitterAssets.tweetId = [[[array objectAtIndex:i] objectForKey:@"retweeted_status"] objectForKey:@"id_str"];
+                
+                twitterAssets.username = [[[[array objectAtIndex:i] objectForKey:@"user"] objectForKey:@"retweeted_status"] objectForKey:@"screen_name"];
+                
+                [self.twitterArray addObject:twitterAssets];
+            }
+            
+            [twitterAssets release];
+            
+            twitterAssets = nil;
+        }
+    }
+}
+
+
+-(void) dealloc
+{	
+    if(nil != twitterResponse)
+    {
+        [twitterResponse release];
+        twitterResponse = nil;
+    }
+    if(nil != twitterArray)
+    {
+        [twitterArray release];
+        twitterArray = nil;
+    }
+	[super dealloc];
+}
+
+@end
+

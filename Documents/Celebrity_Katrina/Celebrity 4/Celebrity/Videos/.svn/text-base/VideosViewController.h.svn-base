@@ -1,0 +1,20 @@
+//
+//  VideosViewController.h
+//  Celebrity
+//
+//  Created by JayaPrathap Audikesavalu on 31/07/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import "Three20/Three20.h"
+#import "ServiceHandler.h"
+#import "Videos.h"
+
+@interface VideosViewController : TTTableViewController {
+
+    Videos *videos;
+}
+@property (nonatomic, retain) Videos *videos;
+
+@end

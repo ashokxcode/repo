@@ -1,0 +1,221 @@
+//
+//  AlbumController.m
+//  Three20PhotoGallery
+//
+//  Created by JayaPrathap Audikesavalu on 13/02/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+#import "AlbumController.h"
+#import "PhotoSource.h"
+#import "Photo.h"
+#import "ServiceHandler.h"
+#import "Constants.h"
+#import "DictionaryUtils.h"
+#import "SharedObjects.h"
+#import "CelebrityAppDelegate.h"
+
+@implementation AlbumController
+
+@synthesize photoView;
+
+- (id)init
+{
+	if (self = [super init]) 
+	{
+		// Initialization code
+        self.title = @"Photo Gallery";
+	}
+	return self;
+}
+
+
+- (void)viewDidLoad {
+
+    [super viewDidLoad];
+    
+    self.title = @"Photo Gallery";
+    
+    UIImageView *backgroundTwitter = [[UIImageView alloc] init];
+    backgroundTwitter.frame = CGRectMake(0, 0, SCREENWIDTH, SCREENHEIGHT);
+    
+    if (UI_USER_INTERFACE_IDIOM()==UIUserInterfaceIdiomPad) {
+        backgroundTwitter.image = [UIImage imageNamed:@"Twitterbg_ipad.png"];
+        
+        self.tableView.height = [[UIScreen mainScreen] bounds].size.height - 155;
+    }
+    else {
+        backgroundTwitter.image = [UIImage imageNamed:@"Twitterbg.png"];
+        
+        self.tableView.height = [[UIScreen mainScreen] bounds].size.height - 75;
+    }
+    
+    [self.view insertSubview:backgroundTwitter belowSubview:self.tableView];
+    [backgroundTwitter release];
+    
+    [self.tableView setBackgroundColor:[UIColor clearColor]];
+    self.tableView.separatorColor = [UIColor clearColor];
+    
+    CelebrityAppDelegate *delegate = (CelebrityAppDelegate*)[[UIApplication sharedApplication] delegate];
+    
+    if ([delegate isNetworkAvailable]) {
+        
+        [delegate addLoadingView];
+        
+        ServiceHandler *service = [[ServiceHandler alloc] init];
+        
+        NSMutableDictionary *photoInfoDict=[[NSMutableDictionary alloc] init];
+        [photoInfoDict setObject:kUserId forKey:kUserIdKey];
+        
+        [service callService:kPhoto withPostData:photoInfoDict callbackTarget:self 
+            callbackSelector:@selector(getPhotoInfo:)];
+        [service release];
+        [photoInfoDict release];
+    }
+    else {
+        
+        // no network message
+        UIAlertView *networkAlert1 = [[UIAlertView alloc] initWithTitle:nil 
+                                                                message:kNoNetworkErr 
+                                                               delegate:nil 
+                                                      cancelButtonTitle:@"OK" 
+                                                      otherButtonTitles:nil];
+        
+        [networkAlert1 show];
+        
+        [networkAlert1 release];
+    }
+
+}
+
+- (void)thumbsTableViewCell:(TTThumbsTableViewCell*)cell didSelectPhoto:(id<TTPhoto>)photo {
+    
+    [_delegate thumbsViewController:self didSelectPhoto:photo];
+    
+    BOOL shouldNavigate = YES;
+    if ([_delegate respondsToSelector:@selector(thumbsViewController:shouldNavigateToPhoto:)]) {
+        shouldNavigate = [_delegate thumbsViewController:self shouldNavigateToPhoto:photo];
+    }
+    
+    if (shouldNavigate) {
+        NSString* URL = [self URLForPhoto:photo];
+        if (URL) {
+            TTOpenURLFromView(URL, self.view);
+        } 
+        else {
+            PhotoViewController *tempPhotoView = [[PhotoViewController alloc] init];
+            self.photoView = tempPhotoView;
+            [tempPhotoView release];
+            self.photoView.centerPhoto = photo;
+            [self.navigationController pushViewController:self.photoView animated:YES];
+        }
+    }
+}
+
+- (NSString*)URLForPhoto:(id<TTPhoto>)photo {
+    
+    if ([photo respondsToSelector:@selector(URLValueWithName:)]) {
+        return [photo URLValueWithName:@"TTPhotoViewController"];
+        
+    } else {
+        return nil;
+    }
+}
+
+-(void)getPhotoInfo:(NSMutableDictionary*)photoDetails{
+	
+    CelebrityAppDelegate *delegate = (CelebrityAppDelegate*)[[UIApplication sharedApplication] delegate];
+
+    [delegate removeLoadingView];
+    
+	if ([photoDetails objectForKey:@"error"]) {
+        
+        UIAlertView *alert=[[UIAlertView alloc] initWithTitle:nil message:kServiceDownMessage delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+        
+        [alert show];
+        
+        [alert release]; 
+    }
+    else 
+    {
+        DictionaryUtils *dictUtils = [DictionaryUtils sharedInstance];
+        
+        NSString *status=[photoDetails objectForKey:@"status"];
+        
+        if([status isEqualToString:@"success"])
+        {
+            Photo *photo = nil;
+            
+            if (nil != [[photoDetails objectForKey:kData] objectForKey:kimages]) {
+                
+                NSArray *imgArray = [[photoDetails objectForKey:kData] objectForKey:kimages];
+                
+                if (nil != imgArray) {
+                    
+                    if ([imgArray count] > 0) {
+                        
+                        for (int i = 0; i < [imgArray count]; i++) {
+                            
+                            NSDictionary *picDict = [imgArray objectAtIndex:i];
+                            
+                            if ([dictUtils dict:picDict hasKey:kThumbnail]) {
+                                
+                                photo = [[Photo alloc] initWithCaption:[picDict objectForKey:kTitle] 
+                                                              urlLarge:[picDict objectForKey:kOriginal] 
+                                                              urlThumb:[picDict objectForKey:kThumbnail]
+                                                                  size:CGSizeMake(0, 440)];
+                            }
+                            else {
+                                
+                                photo = [[Photo alloc] initWithCaption:[picDict objectForKey:kTitle] 
+                                                              urlLarge:[picDict objectForKey:kOriginal] 
+                                                              urlThumb:[picDict objectForKey:kThumbnailUrl]
+                                                                  size:CGSizeMake(0, 440)];
+                            }
+                            
+                            [[[SharedObjects sharedInstance] picsArray] addObject:photo];
+                        }
+
+                        // use this photosource in photoview and albumview
+                        [[SharedObjects sharedInstance] setPhotoSource:[PhotoSource samplePhotoSource]]; 
+                        
+                        self.photoSource = [[SharedObjects sharedInstance] photoSource];
+                    }
+                }
+            }           			
+        }
+        else
+        {
+            NSString *str = [[photoDetails objectForKey:@"data"] objectForKey:@"message"];/*have to get error string*/
+            
+            UIAlertView *alert1 = [[UIAlertView alloc]initWithTitle:nil message:str delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil];
+            
+            [alert1 show];
+            
+            [alert1 release];
+        }
+        
+    }
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+	// Return YES for supported orientations
+	return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+
+
+#pragma mark -
+#pragma mark Memory Management
+
+- (void)didReceiveMemoryWarning {
+	[super didReceiveMemoryWarning]; // Releases the view if it doesn't have a superview
+	// Release anything that's not essential, such as cached data
+}
+
+- (void)dealloc {
+	
+    if (nil != photoView) [photoView release];
+
+	[super dealloc];
+}
+
+@end

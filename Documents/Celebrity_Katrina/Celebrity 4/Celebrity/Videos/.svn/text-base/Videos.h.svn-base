@@ -1,0 +1,24 @@
+//
+//  Videos.h
+//  Celebrity
+//
+//  Created by JayaPrathap Audikesavalu on 13/02/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import <Three20/Three20.h>
+#import "TableSubTitleItem.h"
+#import "TableSubTitleItemCell.h"
+
+@interface Videos : TTTableViewController {
+
+    TableSubTitleItem *selectedVideoItem;
+
+}
+@property (nonatomic, retain) TableSubTitleItem *selectedVideoItem;
+
+- (void) shareThis:(id) sender;
+- (void) tweetThis:(id) sender;
+
+@end

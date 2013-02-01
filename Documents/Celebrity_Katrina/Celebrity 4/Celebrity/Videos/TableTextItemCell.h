@@ -1,0 +1,16 @@
+//
+//  TableTextItemCell.h
+//  CelebrityApp
+//
+//  Created by JayaPrathap Audikesavalu on 09/06/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import <Three20/Three20.h>
+
+@interface TableTextItemCell : TTTableTextItemCell {
+
+}
+
+@end

@@ -1,0 +1,140 @@
+//
+//  TabbarController.m
+//  Celebrity
+//
+//  Created by JayaPrathap Audikesavalu on 30/07/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import "TabbarController.h"
+#import "DictionaryUtils.h"
+
+@implementation TabbarController
+
+@synthesize selectedIndex;
+@synthesize buttonView;
+@synthesize viewControllers;
+@synthesize selectedController;
+
+- (void)dealloc {
+    
+    [buttonView release];
+    [viewControllers release];
+    [super dealloc];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    
+    [self.view insertSubview:buttonView aboveSubview:self.view];
+    
+    selectedController = (UINavigationController*)[viewControllers objectAtIndex:selectedIndex-1];
+    
+    [self.view insertSubview:selectedController.view belowSubview:buttonView];
+    
+    if ([buttonView viewWithTag:selectedIndex]) {
+        
+        if ([[buttonView viewWithTag:selectedIndex] isKindOfClass:[UIButton class]]) {
+            
+            UIButton *button = (UIButton*)[buttonView viewWithTag:selectedIndex];
+            
+            [button setSelected:YES];
+        }
+    }
+}
+
+- (void) loadView {
+
+    UIView *ContentView = [[UIView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+	self.view = ContentView;
+	[ContentView release];
+	self.view.opaque = YES;
+    self.view.backgroundColor = [UIColor clearColor];
+    
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    
+    CGRect buttonViewFrame = CGRectZero;
+    CGRect button1Frame = CGRectZero;
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        buttonViewFrame = CGRectMake(0, screenRect.size.height-130, screenRect.size.width, 130);
+        button1Frame = CGRectMake(0, 0, buttonViewFrame.size.width/4, 130);
+    }
+    else {
+        buttonViewFrame = CGRectMake(0, screenRect.size.height-65, screenRect.size.width, 65);
+        button1Frame = CGRectMake(0, 0, buttonViewFrame.size.width/4, 65);
+    }
+    
+    buttonView = [[UIView alloc] initWithFrame:buttonViewFrame];
+    buttonView.tag = 65;
+    buttonView.backgroundColor = [UIColor blackColor];
+    
+    UIButton *button1 = [[DictionaryUtils sharedInstance] createButtonWithNormalImg:[UIImage imageNamed:@"Photos.png"] 
+                                                                      selectedImage:[UIImage imageNamed:@"Photos_select.png"] 
+                                                                              frame:button1Frame];
+    [button1 setTag:1];
+    [button1 addTarget:self action:@selector(tabClicked:) forControlEvents:UIControlEventTouchUpInside];
+    [buttonView addSubview:button1];
+    
+    UIButton *button2 = [[DictionaryUtils sharedInstance] createButtonWithNormalImg:[UIImage imageNamed:@"Newstab.png"] 
+                                                                      selectedImage:[UIImage imageNamed:@"News_select.png"] 
+                                                                              frame:CGRectMake(button1.frame.origin.x+button1.frame.size.width, 0, button1Frame.size.width, 
+                                                                                               button1Frame.size.height)];
+    [button2 setTag:2];
+    [button2 addTarget:self action:@selector(tabClicked:) forControlEvents:UIControlEventTouchUpInside];
+    [buttonView addSubview:button2];
+    
+    UIButton *button3 = [[DictionaryUtils sharedInstance] createButtonWithNormalImg:[UIImage imageNamed:@"Movie.png"] 
+                                                                      selectedImage:[UIImage imageNamed:@"Movie_select.png"] 
+                                                                              frame:CGRectMake(button2.frame.origin.x+button2.frame.size.width, 0, button1Frame.size.width, 
+                                                                                               button1Frame.size.height)];
+    [button3 setTag:3];
+    [button3 addTarget:self action:@selector(tabClicked:) forControlEvents:UIControlEventTouchUpInside];
+    [buttonView addSubview:button3];
+    
+    UIButton *button4 = [[DictionaryUtils sharedInstance] createButtonWithNormalImg:[UIImage imageNamed:@"twitter.png"] 
+                                                                      selectedImage:[UIImage imageNamed:@"twitter_select.png"] 
+                                                                              frame:CGRectMake(button3.frame.origin.x+button3.frame.size.width, 0, button1Frame.size.width, 
+                                                                                               button1Frame.size.height)];
+    [button4 setTag:4];
+    [button4 addTarget:self action:@selector(tabClicked:) forControlEvents:UIControlEventTouchUpInside];
+    [buttonView addSubview:button4];
+}
+
+- (void) deselectButtonsExcept:(int) buttonTag {
+
+    for (UIButton *button in [buttonView subviews]) {
+        
+        if (button.tag != buttonTag) {
+            
+            [button setSelected:NO];
+        }
+    }
+}
+
+-(void)tabClicked:(id)sender {
+    
+    UIButton *button = (UIButton*)sender;
+    
+    if (button.tag != selectedIndex) {
+        
+        // select recent tab
+        [button setSelected:YES];
+        
+        if (nil != selectedController) {
+            
+            [selectedController removeFromParentViewController];
+        }
+        
+        selectedIndex = button.tag;
+        
+        // deselect first selection
+        [self deselectButtonsExcept:selectedIndex];
+        
+        selectedController = [viewControllers objectAtIndex:button.tag-1];
+        
+        [self.view insertSubview:selectedController.view belowSubview:buttonView];
+    }
+}
+
+@end

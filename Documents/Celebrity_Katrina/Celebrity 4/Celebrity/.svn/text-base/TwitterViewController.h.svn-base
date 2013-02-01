@@ -1,0 +1,24 @@
+//
+//  TwitterViewController.h
+//  Twitter
+//
+//  Created by chandramouli shivakumar on 2/13/12.
+//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface TwitterViewController : UIViewController <UITableViewDelegate, UITableViewDataSource>{
+    
+    UITableView *tableView;
+}
+
+@property(nonatomic, retain) UITableView *tableView;
+
+-(void) initializeTableView;
+-(void) refreshTwits;
+-(void) addLoadingView;
+-(void) removeLoadingView;
+-(void) enableUserInteraction;
+
+@end

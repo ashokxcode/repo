@@ -1,0 +1,670 @@
+//
+//  CelebrityAppDelegate.m
+//  Celebrity
+//
+//  Created by chandramouli shivakumar on 2/18/12.
+//  Copyright 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import "CelebrityAppDelegate.h"
+#import "Constants.h"
+#import "DictionaryUtils.h"
+#import "OAAsynchronousDataFetcher.h"
+#import "AlertPrompt.h"
+#import "SharedObjects.h"
+
+#define kOAuthConsumerKey	  @"F9c1Nsmtd9e1FghcKV1FUg"		//REPLACE With Twitter App OAuth Key  
+#define kOAuthConsumerSecret  @"vEx9keGuN1CgIe2Xm68CrLINon1wTcxetAkuSSoJTY"		//REPLACE With Twitter App OAuth Secret
+
+@implementation CelebrityAppDelegate
+
+@synthesize reachability;
+@synthesize window = _window;
+@synthesize albumController;
+@synthesize videosViewController;
+@synthesize newsViewController;
+@synthesize tweetViewController;
+@synthesize fbUtil;
+@synthesize _engine;
+@synthesize selectedIndex;
+@synthesize tabbarController;
+@synthesize videosView;
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+    [self setupReachability];
+
+    /*Used for Downloading Large content files*/
+    [[TTURLRequestQueue mainQueue] setMaxContentLength:0];
+    
+    self.fbUtil = [[FBUtil alloc] init];
+    
+    if (_engine == nil) {
+        _engine = [[SA_OAuthTwitterEngine alloc] initOAuthWithDelegate:self];  
+    }
+    _engine.consumerKey    = kOAuthConsumerKey;  
+    _engine.consumerSecret = kOAuthConsumerSecret;
+    
+    tabbarController = [[TabbarController alloc] init]; 
+    
+    albumController = [[AlbumController alloc] init];  
+    
+    newsViewController = [[News alloc] init];
+    
+    videosView = [[VideosViewController alloc] init];
+
+    tweetViewController = [[TwitterViewController alloc] init];
+	
+    UINavigationController* albumNavController = [[UINavigationController alloc] initWithRootViewController:albumController];
+    
+	UINavigationController* newsNavController = [[UINavigationController alloc] initWithRootViewController:newsViewController];
+    
+    UINavigationController* videosNavController = [[UINavigationController alloc] initWithRootViewController:videosView];
+    
+    UINavigationController* twitterNavController = [[UINavigationController alloc] initWithRootViewController:tweetViewController];
+    
+    tabbarController.viewControllers = [NSArray arrayWithObjects:albumNavController, newsNavController, 
+                                                                 videosNavController, twitterNavController, nil];
+
+    [albumNavController release];
+    [newsNavController release];
+    [videosNavController release];
+    [twitterNavController release];
+    
+    initialView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, SCREENWIDTH, SCREENHEIGHT)];
+    
+    UIImageView *bg = [[UIImageView alloc] init];
+    bg.frame = CGRectMake(0, 20, SCREENWIDTH, SCREENHEIGHT);
+    
+    UIButton *photos = [[UIButton alloc] init];
+    UIButton *video = [[UIButton alloc] init];
+    UIButton *news = [[UIButton alloc] init];
+    UIButton *twitterBtn = [[UIButton alloc] init];
+    
+    
+    if (UI_USER_INTERFACE_IDIOM()==UIUserInterfaceIdiomPad)
+    {
+        bg.image = [UIImage imageNamed:@"bg_home.png"];
+        photos.frame = CGRectMake(523, 110, 245, 54);
+        video.frame = CGRectMake(523, 190, 245, 54);
+        news.frame = CGRectMake(523, 270, 245, 54);
+        twitterBtn.frame = CGRectMake(523, 350, 245, 54);
+        
+        [photos setBackgroundImage:[UIImage imageNamed:@"Picture_ipad.png"] forState:UIControlStateNormal];
+        [video setBackgroundImage:[UIImage imageNamed:@"Video_ipad.png"] forState:UIControlStateNormal];
+        [news setBackgroundImage:[UIImage imageNamed:@"News_ipad.png"] forState:UIControlStateNormal];
+        [twitterBtn setBackgroundImage:[UIImage imageNamed:@"Tweets_ipad.png"] forState:UIControlStateNormal];
+    }
+    else
+    {
+        bg.image = [UIImage imageNamed:@"bg.png"];
+        photos.frame = CGRectMake(200, 60, 115, 20);
+        video.frame = CGRectMake(200, 90, 115, 20);
+        twitterBtn.frame = CGRectMake(200, 120, 115, 20);
+        news.frame = CGRectMake(200, 150, 115, 20);
+        
+        [photos setBackgroundImage:[UIImage imageNamed:@"pictures.png"] forState:UIControlStateNormal];
+        [video setBackgroundImage:[UIImage imageNamed:@"videos.png"] forState:UIControlStateNormal];
+        [news setBackgroundImage:[UIImage imageNamed:@"news.png"] forState:UIControlStateNormal];
+        [twitterBtn setBackgroundImage:[UIImage imageNamed:@"twitterBtn.png"] forState:UIControlStateNormal];
+    }
+    
+    [initialView addSubview:bg];
+    [bg release];
+    
+    
+    [photos addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
+    photos.tag = 1;
+    // add to a view
+    [initialView addSubview:photos];
+    
+
+    // add targets and actions
+    [news addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
+    news.tag = 2;
+    // add to a view
+    [initialView addSubview:news];
+    
+
+    // add targets and actions
+    [video addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
+    video.tag = 3;
+    // add to a view
+    [initialView addSubview:video];
+    
+    
+    // add targets and actions
+    [twitterBtn addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
+    twitterBtn.tag = 4;//change tag to 4 while integrating with twitter
+    // add to a view
+    [initialView addSubview:twitterBtn];
+    
+    
+    /*Release All Buttons*/
+    [photos release];
+    [video release];
+    [twitterBtn release];
+    [news release];
+    
+    [self.window addSubview:initialView];
+    
+    // Override point for customization after application launch.
+    [self.window makeKeyAndVisible];
+    
+    /*share to Facebook Notification*/
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(shareLinkInFacebook:) 
+                                                 name:kFaceBookShareNotification object:nil];
+    
+    /*share to Twitter Notification*/
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(shareLinkInTwitter:) 
+                                                 name:kTwitterShareNotification object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(replyToTweet:) 
+                                                 name:kreplyTweetNotification object:nil];
+    
+    return YES;
+}
+
+-(void)buttonClicked:(id)sender {
+
+    if ([self isNetworkAvailable]) {
+
+        UIButton *button = (UIButton*)sender;
+        tabbarController.selectedIndex = button.tag;
+        
+        [initialView removeFromSuperview];
+        [self.window addSubview:tabbarController.view];
+    }
+    else {
+    
+        // no network message
+        UIAlertView *networkAlert1 = [[UIAlertView alloc] initWithTitle:nil 
+                                                                message:kNoNetworkErr 
+                                                               delegate:nil 
+                                                      cancelButtonTitle:@"OK" 
+                                                      otherButtonTitles:nil];
+        
+        [networkAlert1 show];
+        
+        [networkAlert1 release];
+    }
+}
+
+- (void) replyToTweet:(NSNotification*)notification {
+    
+    if(![_engine isAuthorized]){  
+        
+        [self loginToTwitter]; 
+    }
+    else{
+        
+        // show custom alert prompting user entry
+        
+        AlertPrompt *prompt = [AlertPrompt alloc];
+        prompt = [prompt initWithTitle:@"Twitter" 
+                               message:@"Please enter some text in\n\n\n\n" 
+                              delegate:self 
+                     cancelButtonTitle:@"Cancel" 
+                         okButtonTitle:@"Okay"];
+        [prompt show];
+        prompt.frame = CGRectMake(20, 45, 315, 230);
+        [prompt release];
+    }
+}
+
+- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+    if (buttonIndex != [alertView cancelButtonIndex])
+    {
+        NSString *entered = [(AlertPrompt *)alertView enteredText];
+        
+        [_engine sendUpdate:[NSString stringWithFormat:@"%@ %@", [[[SharedObjects sharedInstance] tweetDetails] objectForKey:@"tweetUser"], entered] inReplyTo:[[[[SharedObjects sharedInstance] tweetDetails] objectForKey:@"tweetId"] longLongValue]];
+    }
+}
+
+- (void)applicationWillResignActive:(UIApplication *)application
+{
+    /*
+     Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
+     Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
+     */
+}
+
+- (void)applicationDidEnterBackground:(UIApplication *)application
+{
+    /*
+     Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
+     If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+     */
+}
+
+- (void)applicationWillEnterForeground:(UIApplication *)application
+{
+    /*
+     Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+     */
+}
+
+- (void)applicationDidBecomeActive:(UIApplication *)application
+{
+    /*
+     Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+     */
+}
+
+- (void)applicationWillTerminate:(UIApplication *)application
+{
+    /*
+     Called when the application is about to terminate.
+     Save data if appropriate.
+     See also applicationDidEnterBackground:.
+     */
+}
+
+- (BOOL)application:(UIApplication*)application handleOpenURL:(NSURL*)URL {
+   // TTOpenURL([URL absoluteString]);//[[TTNavigator navigator] openURLAction:[TTURLAction actionWithURLPath:URL.absoluteString]];
+    
+    return [self.fbUtil.facebook handleOpenURL:URL];
+}
+
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url 
+  sourceApplication:(NSString *)sourceApplication 
+         annotation:(id)annotation {
+    
+    return [self.fbUtil.facebook handleOpenURL:url];
+}
+
+#pragma mark -
+#pragma mark Reachability and NetworkStatus
+
+- (void) setupReachability 
+{
+    //[[NSNotificationCenter defaultCenter] addObserver: self selector: @selector(reachabilityChanged:) name:kReachabilityChangedNotification object: nil];
+    self.reachability = [Reachability reachabilityForInternetConnection];
+    
+    [self.reachability startNotifier];
+}
+
+- (void) reachabilityChanged:(NSNotification *)notification 
+{
+    Reachability* curReach = [notification object];
+    NSParameterAssert([curReach isKindOfClass: [Reachability class]]);
+    NetworkStatus netStatus = [curReach currentReachabilityStatus];
+    
+    NSString* strReachableStatus = @"";
+    
+    switch (netStatus)
+    {
+        case NotReachable:
+        {
+            strReachableStatus = @"NotReachable";
+            break;
+        }
+            
+        case ReachableViaWWAN:
+        {
+            strReachableStatus = @"ReachableViaWWAN";
+            break;
+        }
+        case ReachableViaWiFi:
+        {
+            strReachableStatus = @"ReachableViaWiFi";
+            break;
+        }
+    }
+    
+    //updating the network switch timestamp
+    //self.lastNetworkSwitch = [NSDate date];
+}
+
+- (BOOL) isNetworkAvailable
+{
+	if ([[self reachability] currentReachabilityStatus] != 0) 
+    {
+		return YES;
+	}
+    
+	return NO;
+}
+
+#pragma 
+#pragma Share methods
+#pragma 
+
+-(void)shareLinkInFacebook:(NSNotification*)notification {
+   
+    if ([self isNetworkAvailable]) {
+    
+        if (![self.fbUtil.facebook isSessionValid]) {
+            
+            [self.fbUtil login];
+        }
+        else {
+            
+            // add loading indicator
+            [self addLoadingView];
+            
+            if (nil != notification.object) {
+                
+                if ([notification.object isKindOfClass:[UIButton class]]) {
+                    
+                    UIButton *temp = (UIButton*) [notification object];
+                    
+                    if (temp.tag == kVideoShareTag || temp.tag == kNewsShareTag) {
+                        
+                        [self.fbUtil shareNewsAndVideo:(NSMutableDictionary*)[notification userInfo]];
+                    }
+                }
+                else if ([notification.object isKindOfClass:[NSString class]]) {
+                    
+                    NSString *url = notification.object;
+                    
+                    NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:url]];
+                    
+                    UIImage *image = [UIImage imageWithData:data];
+                    
+                    NSMutableDictionary *shareDict = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+                                                      @"Pic shared from Trisha Mobile app", @"name",
+                                                      image, @"picture",
+                                                      nil];
+                    
+                    [self.fbUtil postPhotoToWall:shareDict];
+                    
+                }
+            }
+        }
+    }
+    else {
+        
+        // no network message
+        UIAlertView *networkAlert1 = [[UIAlertView alloc] initWithTitle:nil 
+                                                                message:kNoNetworkErr 
+                                                               delegate:nil 
+                                                      cancelButtonTitle:@"OK" 
+                                                      otherButtonTitles:nil];
+        
+        [networkAlert1 show];
+        
+        [networkAlert1 release];
+    }
+}
+
+-(void)shareLinkInTwitter:(NSNotification*)notification{
+    
+    if ([self isNetworkAvailable]) {
+        
+        if(![_engine isAuthorized]){  
+            
+            [self loginToTwitter]; 
+        }
+        else {
+            
+            // add loading indicator
+            [self addLoadingView];
+            
+            if (nil != notification.object) {
+                
+                if ([notification.object isKindOfClass:[UIButton class]]) {
+                    
+                    UIButton *temp = (UIButton*) [notification object];
+                    
+                    if (temp.tag == kVideoTweetTag || temp.tag == kNewsTweetTag) {
+                        
+                        NSString *videoShareString = [NSString stringWithFormat:@"%@ %@", [[notification userInfo] objectForKey:@"caption"],
+                                                      [[notification userInfo] objectForKey:@"link"]];
+                        
+                        [_engine sendUpdate:videoShareString];
+                    }
+                }
+                else if ([notification.object isKindOfClass:[NSString class]]) {
+                    
+                    NSString *url = notification.object;
+                    
+                    NSData *imageData1 = [NSData dataWithContentsOfURL:[NSURL URLWithString:url]];
+                    
+                    UIImage *image = [UIImage imageWithData:imageData1];
+                    
+                    NSURL *serviceURL = [NSURL URLWithString:@"https://api.twitter.com/1/account/verify_credentials.json"];
+                    
+                    OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL
+                                                                                    consumer:[_engine consumer]
+                                                                                       token:[_engine getAccessToken]
+                                                                                       realm:@"http://api.twitter.com/"
+                                                                           signatureProvider:[_engine signatureProvider]];
+                    [oRequest setHTTPMethod:@"GET"];
+                    
+                    [oRequest prepare];
+                    
+                    NSDictionary * headerDict = [oRequest allHTTPHeaderFields];
+                    NSString * oauthHeader = [NSString stringWithString:[headerDict valueForKey:@"Authorization"]];
+                    
+                    [oRequest release];
+                    oRequest = nil;
+                    
+                    serviceURL = [NSURL URLWithString:@"http://img.ly/api/2/upload.xml"];
+                    oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL
+                                                               consumer:[_engine consumer]
+                                                                  token:[_engine getAccessToken]
+                                                                  realm:@"http://api.twitter.com/"
+                                                      signatureProvider:[_engine signatureProvider]];
+                    [oRequest setHTTPMethod:@"POST"];
+                    [oRequest setValue:@"https://api.twitter.com/1/account/verify_credentials.json" 
+                    forHTTPHeaderField:@"X-Auth-Service-Provider"];
+                    
+                    [oRequest setValue:oauthHeader forHTTPHeaderField:@"X-Verify-Credentials-Authorization"];
+                    
+                    
+                    CGFloat compression = 0.9f;
+                    NSData *imageData = UIImageJPEGRepresentation(image, compression);
+                    
+                    // TODO
+                    // Note from Nate to creator of sendImage method - This seems like it could be a source of sluggishness.
+                    // For example, if the image is large (say 3000px x 3000px for example), it would be better to resize the image
+                    // to an appropriate size (max of img.ly) and then start trying to compress.
+                    
+                    while ([imageData length] > 700000 && compression > 0.1) {
+                        // NSLog(@"Image size too big, compression more: current data size: %d bytes",[imageData length]);
+                        compression -= 0.1;
+                        imageData = UIImageJPEGRepresentation(image, compression);
+                        
+                    }
+                    
+                    NSString *boundary = @"0xKhTmLbOuNdArY";
+                    NSString *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@",boundary];
+                    [oRequest setValue:contentType forHTTPHeaderField:@"Content-Type"];
+                    
+                    NSMutableData *body = [NSMutableData data];
+                    NSString *dispKey = @"Content-Disposition: form-data; name=\"media\"; filename=\"upload.jpg\"\r\n";;
+                    
+                    [body appendData:[[NSString stringWithFormat:@"--%@\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [body appendData:[dispKey dataUsingEncoding:NSUTF8StringEncoding]];
+                    [body appendData:[@"Content-Type: image/jpg\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+                    [body appendData:imageData];
+                    [body appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+                    
+                    [body appendData:[[NSString stringWithFormat:@"--%@\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [body appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"message\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+                    //[body appendData:[[params objectForKey:@"caption"] dataUsingEncoding:NSUTF8StringEncoding]];
+                    [body appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];	
+                    
+                    [body appendData:[[NSString stringWithFormat:@"--%@--\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
+                    
+                    // setting the body of the post to the reqeust
+                    [oRequest setHTTPBody:body];
+                    
+                    // Start the request
+                    OAAsynchronousDataFetcher *fetcher = [OAAsynchronousDataFetcher asynchronousFetcherWithRequest:oRequest
+                                                                                                          delegate:self
+                                                                                                 didFinishSelector:@selector(sendImageTicket:didFinishWithData:)
+                                                                                                   didFailSelector:@selector(sendImageTicket:didFailWithError:)];	
+                    [fetcher start];
+                    
+                    [oRequest release];
+                }
+            }
+        }
+    }
+    else {
+    
+        // no network message
+        UIAlertView *networkAlert1 = [[UIAlertView alloc] initWithTitle:nil 
+                                                                message:kNoNetworkErr 
+                                                               delegate:nil 
+                                                      cancelButtonTitle:@"OK" 
+                                                      otherButtonTitles:nil];
+        
+        [networkAlert1 show];
+        
+        [networkAlert1 release];
+    }
+}
+
+- (void)sendImageTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data {
+	// TODO better error handling here
+	
+	if (ticket.didSucceed) {
+		//[self sendDidFinish];
+		// Finished uploading Image, now need to posh the message and url in twitter
+		NSString *dataString = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+		NSRange startingRange = [dataString rangeOfString:@"<url>" options:NSCaseInsensitiveSearch];
+		NSRange endingRange = [dataString rangeOfString:@"</url>" options:NSCaseInsensitiveSearch];
+		
+		if (startingRange.location != NSNotFound && endingRange.location != NSNotFound) {
+			NSString *urlString = [dataString substringWithRange:NSMakeRange(startingRange.location + startingRange.length, endingRange.location - (startingRange.location + startingRange.length))];
+			
+            [_engine sendUpdate:[NSString stringWithFormat:@"Shared from Trisha Mobile app %@", urlString]];
+		}
+	} 
+    else {
+		
+        [self sendImageTicket:ticket didFailWithError:nil];
+	}
+}
+
+- (void)sendImageTicket:(OAServiceTicket *)ticket didFailWithError:(NSError*)error {
+	
+    UIAlertView *alert3 = [[UIAlertView alloc] initWithTitle:nil 
+                                                    message:@"Tweet failed" 
+                                                   delegate:nil
+                                          cancelButtonTitle:@"Ok" 
+                                          otherButtonTitles:nil];
+    [alert3 show];
+    [alert3 release];
+}
+
+-(void)loginToTwitter{
+    
+  UIViewController *controller = [SA_OAuthTwitterController 
+                                  controllerToEnterCredentialsWithTwitterEngine:_engine 
+                                  delegate:self];  
+  if (controller){  
+
+      [[tabbarController selectedController] presentModalViewController:controller animated:YES];  
+  }  
+}
+
+#pragma mark SA_OAuthTwitterControllerDelegate
+
+- (void) OAuthTwitterController: (SA_OAuthTwitterController *) controller authenticatedWithUsername: (NSString *) username {
+
+}
+
+- (void) OAuthTwitterControllerFailed: (SA_OAuthTwitterController *) controller {
+	
+    NSLog(@"Authentication Failed!");
+}
+
+- (void) OAuthTwitterControllerCanceled: (SA_OAuthTwitterController *) controller {
+	
+    NSLog(@"Authentication Canceled.");
+}
+
+#pragma mark SA_OAuthTwitterEngineDelegate
+
+- (void) storeCachedTwitterOAuthData:(NSString *) data forUsername:(NSString *) username {
+
+	NSUserDefaults	*defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:data forKey:@"authData"];
+	[defaults synchronize];
+}
+
+- (NSString *) cachedTwitterOAuthDataForUsername: (NSString *) username {
+    
+	return [[NSUserDefaults standardUserDefaults] objectForKey: @"authData"];
+}
+
+//=============================================================================================================================
+#pragma mark TwitterEngineDelegate
+
+- (void) requestSucceeded: (NSString *) requestIdentifier {
+	
+    // remove loading indicator
+    [self removeLoadingView];
+    
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil 
+                                                    message:@"Tweet successful" 
+                                                   delegate:nil
+                                          cancelButtonTitle:@"Ok" 
+                                          otherButtonTitles:nil];
+    [alert show];
+    [alert release];
+}
+
+- (void) requestFailed: (NSString *) requestIdentifier withError: (NSError *) error {
+	
+    // remove loading indicator
+    [self removeLoadingView];
+
+    UIAlertView *alert1 = [[UIAlertView alloc] initWithTitle:nil 
+                                                    message:@"Tweet failed. Please try again" 
+                                                   delegate:nil
+                                          cancelButtonTitle:@"Ok" 
+                                          otherButtonTitles:nil];
+    [alert1 show];
+    [alert1 release];
+    
+}
+
+- (void) addLoadingView {
+    
+    UIView *loadingView = [[DictionaryUtils sharedInstance] loadingViewOnNativePages];
+    
+    [loadingView setTag:kLoadingIndicatorOnNativePages];
+    
+    [tabbarController.view addSubview:loadingView];
+}
+
+- (void) removeLoadingView {
+    
+    for (UIView *view in [tabbarController.view subviews]) {
+        
+        if (view.tag == kLoadingIndicatorOnNativePages) {
+            
+            if (nil != view)
+            {
+                [view removeFromSuperview];
+                [self enableUserInteraction];
+            }
+        }
+    }
+}
+
+-(void) enableUserInteraction {
+	
+	for (UIView *view in [tabbarController.view subviews]) {
+		
+        [view setUserInteractionEnabled:YES];
+	}
+}
+
+- (void)dealloc
+{
+    [reachability release];
+    [fbUtil release];
+    [tabbarController release];
+    [initialView release];
+    [_window release];
+    [super dealloc];
+}
+
+@end

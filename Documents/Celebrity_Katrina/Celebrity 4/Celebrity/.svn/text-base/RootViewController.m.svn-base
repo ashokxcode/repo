@@ -1,0 +1,125 @@
+//
+//  RootViewController.m
+//  Celebrity
+//
+//  Created by JayaPrathap Audikesavalu on 12/02/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import "RootViewController.h"
+#import "AlbumController.h"
+#import "Videos.h"
+
+@implementation RootViewController
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    if (self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil]) {
+        self.title = @"HOME";
+        self.navigationItem.backBarButtonItem =
+        [[[UIBarButtonItem alloc] initWithTitle:@"Home" style:UIBarButtonItemStyleBordered
+                                         target:nil action:nil] autorelease];
+
+    }
+    return self;
+}
+
+- (void)didReceiveMemoryWarning
+{
+    // Releases the view if it doesn't have a superview.
+    [super didReceiveMemoryWarning];
+    
+    // Release any cached data, images, etc that aren't in use.
+}
+
+#pragma mark - View lifecycle
+
+/*
+// Implement loadView to create a view hierarchy programmatically, without using a nib.
+- (void)loadView
+{
+}
+*/
+
+
+// Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    self.view.backgroundColor = [UIColor grayColor];
+    UIButton *photos = [[UIButton alloc] initWithFrame:CGRectMake(40, 100, 70, 30)];
+    //photos.backgroundColor = [UIColor blueColor];
+    [photos setTitle:@"Photos!" forState:UIControlStateNormal];
+    // add targets and actions
+    [photos addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
+    
+    photos.tag = 1;
+    // add to a view
+    [self.view addSubview:photos];
+    
+    UIButton *video = [[UIButton alloc] initWithFrame:CGRectMake(40, 150, 70, 30)];
+    [video setTitle:@"Videos!" forState:UIControlStateNormal];
+    // add targets and actions
+    [video addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
+    
+    video.tag = 2;
+    // add to a view
+    [self.view addSubview:video];
+    
+    UIButton *news = [[UIButton alloc] initWithFrame:CGRectMake(140, 100, 70, 30)];
+    [news setTitle:@"News" forState:UIControlStateNormal];
+    // add targets and actions
+    [news addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
+    
+    news.tag = 3;
+    // add to a view
+    [self.view addSubview:news];
+    
+    UIButton *twitterBtn = [[UIButton alloc] initWithFrame:CGRectMake(140, 150, 70, 30)];
+    [twitterBtn setTitle:@"Twitter" forState:UIControlStateNormal];
+    // add targets and actions
+    [twitterBtn addTarget:self action:@selector(buttonClicked:) forControlEvents:UIControlEventTouchUpInside];
+    
+    twitterBtn.tag = 4;
+    // add to a view
+    [self.view addSubview:twitterBtn];
+    
+}
+
+- (void)createModel {
+
+    
+}
+
+-(void)buttonClicked:(id)sender{
+    UIButton *button = (UIButton*)sender;
+    switch (button.tag) {
+        case 1:
+           [[TTNavigator navigator] openURLAction:[TTURLAction actionWithURLPath:@"tt://gallery"]];
+            
+            break;
+        case 2:
+            [[TTNavigator navigator] openURLAction:[TTURLAction actionWithURLPath:@"tt://videos"]];
+            break;
+        case 3:
+            [[TTNavigator navigator] openURLAction:[TTURLAction actionWithURLPath:@"tt://news"]];
+            break;
+        case 4:
+            
+            break;
+    }
+}
+- (void)viewDidUnload
+{
+    [super viewDidUnload];
+    // Release any retained subviews of the main view.
+    // e.g. self.myOutlet = nil;
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+{
+    // Return YES for supported orientations
+    return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+
+@end

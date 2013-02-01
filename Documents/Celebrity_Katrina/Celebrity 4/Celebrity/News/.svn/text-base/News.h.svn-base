@@ -1,0 +1,23 @@
+//
+//  News.h
+//  Celebrity
+//
+//  Created by JayaPrathap Audikesavalu on 13/02/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import <Three20/Three20.h>
+#import "TableSubTitleItem.h"
+#import "NewsDetailController.h"
+
+@interface News : TTTableViewController {
+    
+    TableSubTitleItem *selectedNewsItem;
+    NewsDetailController *newsDetailView;
+}
+
+@property (nonatomic, retain) TableSubTitleItem *selectedNewsItem;
+@property (nonatomic, retain) NewsDetailController *newsDetailView;
+
+@end

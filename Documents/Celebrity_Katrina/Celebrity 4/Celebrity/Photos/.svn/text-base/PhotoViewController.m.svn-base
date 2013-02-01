@@ -1,0 +1,170 @@
+//
+//  PhotoViewController.m
+//  CelebrityApp
+//
+//  Created by JayaPrathap Audikesavalu on 28/04/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import "PhotoViewController.h"
+#import "PhotoSource.h"
+#import "Photo.h"
+#import "Constants.h"
+#import "SharedObjects.h"
+#import "PhotoView.h"
+
+@implementation PhotoViewController
+
+- (void)loadView
+{
+    UIView *ContentView = [[UIView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+	self.view = ContentView;
+	[ContentView release];
+	self.view.opaque = YES;
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        
+        self.navigationController.navigationBar.tintColor = [UIColor colorWithHue:0.6 saturation:0.33 
+                                                                       brightness:0.69 alpha:0];
+    }
+    else {
+
+        self.navigationBarStyle = UIBarStyleDefault;
+    }
+    [self.navigationController.navigationBar setTranslucent:YES];
+    [self loadPhotosView];
+}
+
+- (PhotoView*)createPhotoView {
+    
+    return [[[PhotoView alloc] init] autorelease];
+}
+
+
+- (void) loadPhotosView {
+    
+    self.photoSource = [[SharedObjects sharedInstance] photoSource];
+    
+    CGRect screenFrame = [UIScreen mainScreen].bounds;
+    self.view = [[[UIView alloc] initWithFrame:screenFrame] autorelease];
+    
+    CGRect innerFrame = CGRectMake(0, 0,
+                                   screenFrame.size.width, screenFrame.size.height);
+    _innerView = [[UIView alloc] initWithFrame:innerFrame];
+    _innerView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+    [self.view addSubview:_innerView];
+    
+    UIImageView *backgroundTwitter = [[UIImageView alloc] init];
+    backgroundTwitter.frame = CGRectMake(0, 0, SCREENWIDTH, SCREENHEIGHT);
+    
+    if (UI_USER_INTERFACE_IDIOM()==UIUserInterfaceIdiomPad) {
+        backgroundTwitter.image = [UIImage imageNamed:@"Twitterbg_ipad.png"];
+    }
+    else {
+        backgroundTwitter.image = [UIImage imageNamed:@"Twitterbg.png"];
+    }
+    
+    [_innerView addSubview:backgroundTwitter];
+    [backgroundTwitter release];
+    
+    _scrollView = [[TTScrollView alloc] initWithFrame:screenFrame];
+    _scrollView.delegate = self;
+    _scrollView.dataSource = self;
+    _scrollView.rotateEnabled = NO;
+    _scrollView.backgroundColor = [UIColor clearColor];
+    _scrollView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+    [_innerView addSubview:_scrollView];
+   
+}
+
+- (void)updateChrome {
+    
+    self.statusBarStyle = UIStatusBarStyleDefault;
+    
+    if (_photoSource.numberOfPhotos < 2) {
+        self.title = _photoSource.title;
+        
+    } else {
+        self.title = [NSString stringWithFormat:
+                      TTLocalizedString(@"%d of %d", @"Current page in photo browser (1 of 10)"),
+                      _centerPhotoIndex+1, _photoSource.numberOfPhotos];
+    }
+    
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] 
+                                              initWithBarButtonSystemItem:UIBarButtonSystemItemAction 
+                                              target:self 
+                                              action:@selector(share:)];
+}
+
+//- (void)scrollView:(TTScrollView*)scrollView tapped:(UITouch*)touch {
+//
+//    //self.navigationController.navigationBarHidden = !self.navigationController.navigationBarHidden;
+//}
+
+-(void)share:(id)sender{
+    
+    UIActionSheet *viewAlert = [[UIActionSheet alloc]
+                                initWithTitle:@""
+                                delegate:self cancelButtonTitle:@"Cancel"
+                                destructiveButtonTitle:nil
+                                otherButtonTitles:@"FaceBook",
+                                @"Twitter",nil];
+    viewAlert.tag = 923;
+    [viewAlert showFromBarButtonItem:self.navigationItem.rightBarButtonItem animated:YES];
+    [viewAlert release];
+    
+}
+
+- (void)actionSheet:(UIActionSheet *)modalView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (modalView.tag == 923)
+    {
+        // Change the navigation bar style, also make the status bar match with it
+        switch (buttonIndex)
+        {
+            case 0:
+            {
+                NSString *url1 = [_centerPhoto URLForVersion:TTPhotoVersionLarge];
+                NSLog(@"fb share photo url %@", url1);
+                
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"FaceBookShare" 
+                                                                    object:url1];
+                break;
+            }
+            case 1:
+            {
+                /*TwitterShare*/
+                NSString *url2 = [_centerPhoto URLForVersion:TTPhotoVersionLarge];
+                NSLog(@"twt share photo url %@", url2);
+
+                [[NSNotificationCenter defaultCenter] postNotificationName:@"TwitterShare" 
+                                                                    object:url2];
+                break;
+            }
+            case 2:
+            {
+                NSLog(@"no url");
+                break;
+            }
+        }
+    }
+}
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+{
+    // Return YES for supported orientations
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        
+        return UIInterfaceOrientationIsPortrait(interfaceOrientation);
+    }
+    
+    return NO;
+}
+
+- (void) dealloc {
+
+    [super dealloc];
+}
+
+@end

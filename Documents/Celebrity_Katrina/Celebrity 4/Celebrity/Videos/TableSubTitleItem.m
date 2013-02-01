@@ -1,0 +1,99 @@
+//
+//  TableSubTitleItem.m
+//  CelebrityApp
+//
+//  Created by JayaPrathap Audikesavalu on 21/05/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import "TableSubTitleItem.h"
+#import "TableSubTitleItemCell.h"
+
+@implementation TableSubTitleItem
+
+@synthesize title = _title,
+subTitle = _subTitle,
+url = _url,
+thumbImageUrl = _thumbImageUrl,
+detailImageUrl = _detailImageUrl,
+createdDate = _createdDate,
+createdTime = _createdTime;
+
++ (id)itemWithText:(NSString*)text 
+          subtitle:(NSString*)subtitle 
+          imageURL:(NSString*)imageURL
+               URL:(NSString*)URL 
+{
+    TableSubTitleItem* item = [[[self alloc] init] autorelease];
+    item.title = text;
+    item.subTitle = [subtitle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    item.thumbImageUrl = [imageURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    item.url = [URL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    return item;
+}
+
++ (id)itemWithText:(NSString*)text subtitle:(NSString*)subtitle 
+          thumbURL:(NSString*)thumbURL
+          imageURL:(NSString*)imageUrl 
+               URL:(NSString*)URL 
+              time:(NSMutableString*) createdTime
+              date:(NSMutableString*) createdDate 
+{
+    TableSubTitleItem* item = [[[self alloc] init] autorelease];
+    item.title = text;
+    item.subTitle = [subtitle stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    item.thumbImageUrl = [thumbURL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    item.detailImageUrl = [imageUrl stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    item.url = [URL stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    item.createdDate = createdDate;
+    item.createdTime = createdTime;
+    
+    return item;
+}
+
+
+- (id)init {  
+    if (self = [super init]) {  
+        _thumbImageUrl = nil;  
+        _detailImageUrl = nil;
+    }  
+    return self;  
+}  
+
+- (void)dealloc {  
+    [_title release];
+    [_subTitle release];
+    [_url release];
+    [_createdDate release];
+    [_createdTime release];
+    TT_RELEASE_SAFELY(_thumbImageUrl);
+    TT_RELEASE_SAFELY(_detailImageUrl);
+    [super dealloc];  
+}  
+
+///////////////////////////////////////////////////////////////////////////////////////////////////  
+// NSCoding  
+
+- (id)initWithCoder:(NSCoder*)decoder {
+	self = [super initWithCoder:decoder];
+    if (self) {
+        self.thumbImageUrl = [decoder decodeObjectForKey:@"thumbImageUrl"];
+        self.detailImageUrl = [decoder decodeObjectForKey:@"detailImageUrl"]; 
+    }
+    return self;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+- (void)encodeWithCoder:(NSCoder*)encoder {
+    [super encodeWithCoder:encoder];
+    
+    if (self.thumbImageUrl) {
+        [encoder encodeObject:self.thumbImageUrl forKey:@"thumbImageUrl"];
+    }
+    if (self.detailImageUrl) {
+        [encoder encodeObject:self.detailImageUrl forKey:@"detailImageUrl"];
+    }
+}
+
+@end

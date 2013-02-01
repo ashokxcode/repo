@@ -1,0 +1,14 @@
+//
+//  RootViewController.h
+//  Celebrity
+//
+//  Created by JayaPrathap Audikesavalu on 12/02/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import <Three20/Three20.h>
+
+@interface RootViewController : TTViewController
+
+@end

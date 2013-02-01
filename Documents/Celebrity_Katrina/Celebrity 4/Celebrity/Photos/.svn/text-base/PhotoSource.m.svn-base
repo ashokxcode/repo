@@ -1,0 +1,86 @@
+//
+//  PhotoSource.m
+//  Three20PhotoGallery
+//
+//  Created by JayaPrathap Audikesavalu on 13/02/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import "PhotoSource.h"
+#import "Photo.h"
+#import "SharedObjects.h"
+#import "Constants.h"
+
+@implementation PhotoSource
+
+@synthesize title = _title;
+@synthesize photos = _photos;
+
+- (id) initWithTitle:(NSString *)title photos:(NSArray *)photos {
+    if ((self = [super init])) {
+        self.title = title;
+        self.photos = photos;
+        
+        for(int i = 0; i < _photos.count; ++i) {
+            Photo *photo = [_photos objectAtIndex:i];
+            photo.photoSource = self;
+            photo.index = i;
+        }        
+    }
+    return self;
+}
+
+- (void) dealloc {
+    self.title = nil;
+    self.photos = nil; 
+    [super dealloc];
+}
+
+#pragma mark TTModel
+
+- (BOOL)isLoading { 
+    return FALSE;
+}
+
+- (BOOL)isLoaded {
+    return TRUE;
+}
+
+#pragma mark TTPhotoSource
+
+- (NSInteger)numberOfPhotos {
+    return _photos.count;
+}
+
+- (NSInteger)maxPhotoIndex {
+    return _photos.count-1;
+}
+
+- (id<TTPhoto>)photoAtIndex:(NSInteger)photoIndex {
+    if (photoIndex < _photos.count) {
+        return [_photos objectAtIndex:photoIndex];
+    } else {
+        return nil;
+    }
+}
+
+#pragma mark Singleton
+
+PhotoSource *samplePhotoSource = nil;
+
++ (PhotoSource *) samplePhotoSource {
+    
+    @synchronized(self) {
+        
+        if (nil != samplePhotoSource) {
+            [samplePhotoSource release];
+            samplePhotoSource = nil;
+        }
+        
+        samplePhotoSource = [[self alloc] initWithTitle:@"Photo Gallery" 
+                                                 photos:[[SharedObjects sharedInstance] picsArray]];
+    }
+    return samplePhotoSource;
+}
+
+@end

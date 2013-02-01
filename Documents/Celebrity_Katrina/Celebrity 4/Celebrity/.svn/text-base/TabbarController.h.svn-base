@@ -1,0 +1,25 @@
+//
+//  TabbarController.h
+//  Celebrity
+//
+//  Created by JayaPrathap Audikesavalu on 30/07/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface TabbarController:UIViewController  {
+    
+    int selectedIndex;
+    UIView *buttonView;
+    NSArray *viewControllers;
+    UINavigationController *selectedController;
+}
+
+@property (nonatomic, assign) int selectedIndex;
+@property (nonatomic, retain) UIView *buttonView;
+@property (nonatomic, retain) NSArray *viewControllers;
+@property (nonatomic, retain) UINavigationController *selectedController;
+
+
+@end

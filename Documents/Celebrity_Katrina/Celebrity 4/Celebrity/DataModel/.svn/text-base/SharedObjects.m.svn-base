@@ -1,0 +1,194 @@
+//
+//  SharedObjects.m
+//  iShop3.0
+//
+//  Created by Admin on 11/04/11.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import "SharedObjects.h"
+#import "DataModelEntities.h"
+#import "DictionaryUtils.h"
+#import "TableSubTitleItem.h"
+#import "Constants.h"
+
+static SharedObjects *shardObjectsDelegate = nil;
+
+@implementation SharedObjects
+@synthesize twitterAssets;
+@synthesize serviceResponse;
+@synthesize videoSource;
+@synthesize newsArray;
+@synthesize tweetDetails;
+@synthesize playlistNamesArray;
+@synthesize playlistIdDict;
+@synthesize picsArray;
+@synthesize photoSource;
+
+- (id) init {
+	self = [super init];	
+
+    if(nil == twitterAssets)
+    {
+        twitterAssets = [[TwitterAssets alloc] init];
+    }
+    if(nil == serviceResponse)
+    {
+        serviceResponse = [[ServiceResponse alloc] init];
+    }
+    if(nil == videoSource) {
+        
+        videoSource = [[NSMutableArray alloc] init];
+    }
+    if(nil == newsArray) {
+        
+        newsArray = [[NSMutableArray alloc] init];
+    }
+    if (nil == tweetDetails) {
+        
+        tweetDetails = [[NSMutableDictionary alloc] init];
+    }
+    if (nil == playlistNamesArray) {
+        
+        playlistNamesArray = [[NSArray alloc] initWithObjects:[TTTableTextItem itemWithText:@"Trisha Songs - Tamil"],
+                              [TTTableTextItem itemWithText:@"Trisha Songs - Telugu"],
+                              [TTTableTextItem itemWithText:@"Trisha Scenes - Tamil"],
+                              [TTTableTextItem itemWithText:@"Trisha Scenes - Telugu"], nil];
+    }
+    if (nil == playlistIdDict) {
+        
+        playlistIdDict = [[NSMutableDictionary alloc] initWithObjectsAndKeys:@"6E87A048FAB6A517", @"Trisha Songs - Tamil",  
+                          @"342C42644CFA4B38", @"Trisha Songs - Telugu", 
+                          @"119C8E40BC2B4553", @"Trisha Scenes - Tamil", 
+                          @"D8B043CCC3775F0E", @"Trisha Scenes - Telugu", nil];
+    }
+    
+    picsArray = [[NSMutableArray alloc] init];
+    
+    photoSource = nil;
+
+	return self;
+}
+
+- (id)autorelease
+{
+    return self;
+}
+
+#pragma mark --
+#pragma mark singleton object methods 
+#pragma mark --
+
++ (SharedObjects *)sharedInstance {
+    @synchronized(self) {
+        if (shardObjectsDelegate == nil) 
+		{
+			shardObjectsDelegate= [[self alloc] init]; // assignment not done here
+        }
+    }
+	
+    return shardObjectsDelegate;
+}
+
+- (void) updateVideos:(NSMutableDictionary*) videosResponseDict { 
+    
+    if (nil != videoSource) {
+        
+        if ([videoSource count] > 0) {
+            
+            [videoSource removeAllObjects];
+        }
+    }
+    
+    DictionaryUtils *dictUtils = [DictionaryUtils sharedInstance];
+    
+    if (nil != videosResponseDict) {
+        
+        if ([dictUtils dict:videosResponseDict hasKey:kData]) {
+            
+            if ([dictUtils dict:[videosResponseDict objectForKey:kData] hasKey:kItems]) {
+                
+                NSArray *itemArray = [[videosResponseDict objectForKey:kData] objectForKey:kItems];
+                
+                if (itemArray != nil && [itemArray count] > 0) {
+                    
+                    for (int i = 0; i < [itemArray count]; i++) {
+                        
+                        NSDictionary *itemDict = [itemArray objectAtIndex:i];
+                        
+                        if (nil != itemDict && [itemDict count] > 0) {
+                            
+                            NSDictionary *videoDict = [itemDict objectForKey:kvideo];
+                            
+                            if (nil != videoDict && [videoDict count] > 0) {
+                                
+                                if ([dictUtils dict:videoDict hasKey:kThumbnail]) {
+                                    
+                                    [videoSource addObject:[TableSubTitleItem itemWithText:[videoDict objectForKey:kTitle] 
+                                                                                  subtitle:[videoDict objectForKey:kDesc] 
+                                                                                  imageURL:[[videoDict objectForKey:kThumbnail] objectForKey:kSqDefault] 
+                                                                                       URL:[[videoDict objectForKey:kPlayer] objectForKey:kDefault]]];
+                                }
+                                else if ([dictUtils dict:videoDict hasKey:kThumbnailUrl]) {
+                                    
+                                    [videoSource addObject:[TableSubTitleItem itemWithText:[videoDict objectForKey:kTitle] 
+                                                                                  subtitle:[videoDict objectForKey:kDesc] 
+                                                                                  imageURL:[[videoDict objectForKey:kThumbnailUrl] objectForKey:kSqDefault] 
+                                                                                       URL:[[videoDict objectForKey:kPlayer] objectForKey:kDefault]]];
+                                }
+                            }
+                            
+                        }
+                        
+                    }
+                }
+                else {
+                    
+                    // no video elements found
+                }
+            }
+        }
+    } 
+}
+
+- (void) dealloc
+{
+	if(nil != twitterAssets)
+    {
+        [twitterAssets release];
+        twitterAssets = nil;
+    }
+    if(nil != serviceResponse)
+    {
+        [serviceResponse release];
+        serviceResponse = nil;
+    }
+    if(nil != videoSource)
+    {
+        [videoSource release];
+        videoSource = nil;
+    }
+    if (nil != newsArray) 
+    {
+        [newsArray release];
+        newsArray = nil;
+    }
+    if (nil != tweetDetails) 
+    {
+        [tweetDetails release];
+        tweetDetails = nil;
+    }
+    if (nil != playlistIdDict) 
+    {
+        [playlistIdDict release];
+        playlistIdDict = nil;
+    }
+    if (nil != playlistNamesArray) 
+    {
+        [playlistNamesArray release];
+        playlistNamesArray = nil;
+    }
+	[super dealloc];
+}
+
+@end

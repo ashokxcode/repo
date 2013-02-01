@@ -1,0 +1,165 @@
+//
+//  NewsTableItemCell.m
+//  CelebrityApp
+//
+//  Created by JayaPrathap Audikesavalu on 12/06/12.
+//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//
+
+#import "NewsTableItemCell.h"
+#import "TableSubTitleItem.h"
+#import "Constants.h"
+
+@implementation NewsTableItemCell
+
+@synthesize fbButton;
+@synthesize twtButton;
+
++ (CGFloat)tableView:(UITableView*)tableView rowHeightForObject:(id)object {  
+    
+    CGFloat height = 0;
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        height = 155;
+    }
+    else {
+        height = 85;
+    } 
+    
+    return height;
+}  
+
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString*)identifier {  
+    if (self = [super initWithStyle:UITableViewCellStyleValue2 reuseIdentifier:identifier]) {  
+        _item = nil;  
+        
+        textLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+        textLabel.textColor = kFontColor;  
+        textLabel.textAlignment = UITextAlignmentLeft;  
+        textLabel.contentMode = UIViewContentModeTop;  
+        textLabel.lineBreakMode = UILineBreakModeWordWrap;  
+        textLabel.backgroundColor = [UIColor clearColor];
+        [self.contentView addSubview:textLabel];
+        
+        _imageView1 = [[TTImageView alloc] initWithFrame:CGRectZero];  
+        _imageView1.style = [TTSolidFillStyle styleWithColor:[UIColor colorWithRed:10 green:15 blue:100 alpha:0.1] next:
+                             [TTShapeStyle styleWithShape:[TTRoundedRectangleShape shapeWithRadius:10.0f] next:
+                              [TTContentStyle styleWithNext:nil]]];
+        [self.contentView addSubview:_imageView1];  
+        
+        fbButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        fbButton.frame = CGRectZero;
+        [fbButton setBackgroundImage:[UIImage imageNamed:@"fbButton.png"] forState:UIControlStateNormal];
+        [fbButton setBackgroundColor:[UIColor clearColor]];
+        fbButton.tag = kNewsShareTag;
+        [fbButton addTarget:self action:@selector(shareThis) forControlEvents:UIControlEventTouchUpInside];
+        [self.contentView addSubview:fbButton];
+        
+        twtButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        twtButton.frame = CGRectZero;
+        [twtButton setBackgroundImage:[UIImage imageNamed:@"twitterButton.png"] forState:UIControlStateNormal];
+        twtButton.tag = kNewsTweetTag;
+        [twtButton addTarget:self action:@selector(tweetThis) forControlEvents:UIControlEventTouchUpInside];
+        [twtButton setBackgroundColor:[UIColor clearColor]];
+        [self.contentView addSubview:twtButton];
+    }  
+    return self;  
+}  
+
+- (void) shareThis {
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:kshareNewsNotification 
+                                                        object:self.fbButton 
+                                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:self.object,
+                                                                kNotificationShareKey, nil]];
+}
+
+- (void) tweetThis {
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:ktweetNewsNotification 
+                                                        object:self.twtButton 
+                                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:self.object,
+                                                                kNotificationShareKey, nil]];
+}
+
+- (void)dealloc {  
+    [textLabel release];
+    TT_RELEASE_SAFELY(_imageView1);
+    [super dealloc];  
+}  
+
+///////////////////////////////////////////////////////////////////////////////////////////////////  
+// UIView  
+
+- (void)layoutSubviews {  
+    [super layoutSubviews];  
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        
+        CGSize textSize = [textLabel.text sizeWithFont:kFontHelvetica22  
+                                     constrainedToSize:CGSizeMake(700, CGFLOAT_MAX)  
+                                         lineBreakMode:UILineBreakModeWordWrap];  
+        
+        _imageView1.frame = CGRectMake(10, 10, 110, 110);
+        textLabel.frame = CGRectMake(_imageView1.frame.size.width + 30, 5, 400, textSize.height+20);
+        
+        fbButton.frame = CGRectMake(_imageView1.frame.origin.x+_imageView1.frame.size.width+500,
+                                    _imageView1.frame.origin.y+_imageView1.frame.size.height-35, 45, 45);
+        
+        twtButton.frame = CGRectMake(fbButton.frame.origin.x+fbButton.frame.size.width+15, 
+                                     fbButton.frame.origin.y, 45, 45); 
+    }
+    else {
+        
+        CGSize textSize = [textLabel.text sizeWithFont:kFontHelvetica14  
+                                     constrainedToSize:CGSizeMake(290, CGFLOAT_MAX)  
+                                         lineBreakMode:UILineBreakModeWordWrap];  
+        
+        _imageView1.frame = CGRectMake(5, 5, 60, 60);
+        textLabel.frame = CGRectMake(_imageView1.frame.size.width + 20, 5, 195, textSize.height+10);
+        
+        fbButton.frame = CGRectMake(_imageView1.frame.origin.x+_imageView1.frame.size.width+175, 
+                                    _imageView1.frame.origin.y+_imageView1.frame.size.height-15, 25, 25);
+        
+        twtButton.frame = CGRectMake(fbButton.frame.origin.x+fbButton.frame.size.width+10, 
+                                     fbButton.frame.origin.y, 25, 25);
+    }
+}  
+
+///////////////////////////////////////////////////////////////////////////////////////////////////  
+// TTTableViewCell  
+
+- (id)object {  
+    return _item;  
+}  
+
+- (void)setObject:(id)object {  
+    
+    if (_item != object) {  
+        [super setObject:object];  
+        
+        TableSubTitleItem* item = object;  
+        self.textLabel.text = @"";
+        textLabel.text = item.title;
+        
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            textLabel.font = kFontHelvetica22;
+            textLabel.numberOfLines = 3;
+            
+            [_imageView1 setDefaultImage:[UIImage imageNamed:@"Icon@2x.png"]]; //use app icon image
+        }
+        else {
+            textLabel.font = kFontHelvetica14;
+            textLabel.numberOfLines = 3;
+            
+            [_imageView1 setDefaultImage:[UIImage imageNamed:@"Icon.png"]];
+        }
+        
+        NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:item.thumbImageUrl]];
+        if (data != nil && [data length] > 0) {
+            [_imageView1 setDefaultImage:[UIImage imageWithData:data]];
+        }
+    }  
+}  
+
+@end

@@ -1,0 +1,44 @@
+//
+//  SharedObjects.h
+//  iShop3.0
+//
+//  Created by Admin on 11/04/11.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import <Three20/Three20.h>
+
+@class TwitterAssets;
+@class ServiceResponse;
+
+@interface SharedObjects : NSObject {
+    
+    TwitterAssets *twitterAssets;
+    ServiceResponse *serviceResponse;
+    NSMutableArray *videoSource;
+    NSMutableArray *newsArray;
+    NSMutableDictionary *tweetDetails;
+    NSArray *playlistNamesArray;
+    NSMutableDictionary *playlistIdDict; 
+    NSMutableArray *picsArray;
+    id<TTPhotoSource> photoSource;
+}
+
+@property (nonatomic, retain) TwitterAssets *twitterAssets;
+@property (nonatomic, retain) ServiceResponse *serviceResponse;
+@property (nonatomic, retain) NSMutableArray *videoSource;
+@property (nonatomic, retain) NSMutableArray *newsArray;
+@property (nonatomic, retain) NSMutableDictionary *tweetDetails;
+@property (nonatomic, retain) NSArray *playlistNamesArray;
+@property (nonatomic, retain) NSMutableDictionary *playlistIdDict; 
+@property (nonatomic, retain) NSMutableArray *picsArray;
+@property (nonatomic, retain) id<TTPhotoSource> photoSource;
+
+#pragma mark singleton object methods 
+
++ (SharedObjects *)sharedInstance;
+
+- (void) updateVideos:(NSMutableDictionary*) videosResponseDict;
+
+@end

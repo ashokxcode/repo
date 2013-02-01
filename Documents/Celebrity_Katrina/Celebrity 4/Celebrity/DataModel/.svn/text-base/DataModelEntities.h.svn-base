@@ -1,0 +1,42 @@
+//
+//  DataModelEntities.h
+//  iShop3.0
+//
+//  Created by Admin on 11/04/11.
+//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+
+@interface TwitterAssets : NSObject{
+	
+    NSString *tweet;
+    NSString *profileImage;
+    NSString *timeStamp;
+    NSString *tweetId;
+    NSString *username;
+}
+@property (nonatomic, retain) NSString *tweet;
+@property (nonatomic, retain) NSString *profileImage;
+@property (nonatomic, retain) NSString *timeStamp;
+@property (nonatomic, copy) NSString *tweetId;
+@property (nonatomic, copy) NSString *username;
+
+@end
+
+
+@interface ServiceResponse : NSObject {
+    
+    NSMutableArray *twitterResponse;
+    
+    NSMutableArray *twitterArray;
+}
+
+@property(nonatomic, retain) NSMutableArray *twitterResponse;
+@property(nonatomic, retain) NSMutableArray *twitterArray;
+
+-(void) setTwitterProperties:(NSMutableArray*) array;
+
+@end
+
